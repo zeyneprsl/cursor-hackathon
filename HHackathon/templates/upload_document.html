@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Doküman Yükle - EduCoach{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-upload text-primary me-2"></i>Doküman Yükle
+                    </h3>
+                    <p class="text-muted mb-0">Çalışma materyallerinizi paylaşın ve kredi kazanın</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.title.label(class="form-label") }}
+                                    {{ form.title(class="form-control", placeholder="Örn: Algoritma Ders Notları") }}
+                                    {% if form.title.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.title.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.subject.label(class="form-label") }}
+                                    {{ form.subject(class="form-select") }}
+                                    {% if form.subject.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.subject.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows="4", placeholder="Doküman hakkında kısa açıklama yazın...") }}
+                            {% if form.description.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.description.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.file.label(class="form-label") }}
+                            {{ form.file(class="form-control", accept=".pdf,.doc,.docx,.txt") }}
+                            {% if form.file.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.file.errors %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                Desteklenen formatlar: PDF, DOC, DOCX, TXT (Maksimum 10MB)
+                            </div>
+                        </div>
+                        
+                        <!-- AI Analysis Preview -->
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-robot me-2"></i>AI Analizi
+                            </h6>
+                            <p class="mb-0">
+                                <strong>Gemini AI</strong> dokümanınızı analiz edecek ve otomatik özet oluşturacak. 
+                                Bu sayede diğer öğrenciler dokümanınızı daha kolay bulabilecek.
+                            </p>
+                        </div>
+                        
+                        <!-- Cost Info -->
+                        <div class="alert alert-warning">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-coins me-2"></i>Kredi Bilgisi
+                            </h6>
+                            <p class="mb-0">
+                                Doküman yükleme ücreti: <strong>100 kredi</strong><br>
+                                Mevcut bakiyeniz: <strong>{{ current_user.credits }} kredi</strong>
+                            </p>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('documents') }}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-arrow-left me-2"></i>İptal
+                            </a>
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Tips -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>İpuçları
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-file-alt text-primary me-2"></i>Dosya Formatı</h6>
+                            <p class="small text-muted">PDF formatı en iyi görüntüleme deneyimi sağlar. Metin tabanlı dosyalar AI analizi için idealdir.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-tag text-primary me-2"></i>Etiketleme</h6>
+                            <p class="small text-muted">Açıklayıcı başlık ve konu seçimi, dokümanınızın daha kolay bulunmasını sağlar.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-robot text-primary me-2"></i>AI Analizi</h6>
+                            <p class="small text-muted">Gemini AI dokümanınızı analiz ederek otomatik özet ve etiketler oluşturacak.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-coins text-primary me-2"></i>Kredi Sistemi</h6>
+                            <p class="small text-muted">Her yüklediğiniz doküman için 100 kredi kazanırsınız ve diğer dokümanları indirebilirsiniz.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('file');
+    const submitBtn = document.querySelector('input[type="submit"]');
+    
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const fileSize = file.size / 1024 / 1024; // MB
+            if (fileSize > 10) {
+                alert('Dosya boyutu 10MB\'dan büyük olamaz!');
+                this.value = '';
+                return;
+            }
+            
+            // Show file info
+            const fileInfo = document.createElement('div');
+            fileInfo.className = 'mt-2 small text-success';
+            fileInfo.innerHTML = `<i class="fas fa-check me-1"></i>Seçilen dosya: ${file.name} (${fileSize.toFixed(2)} MB)`;
+            
+            // Remove previous file info
+            const prevInfo = this.parentNode.querySelector('.text-success');
+            if (prevInfo) prevInfo.remove();
+            
+            this.parentNode.appendChild(fileInfo);
+        }
+    });
+});
+</script>
+{% endblock %}

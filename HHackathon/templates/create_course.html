@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Kurs Oluştur - EduCoach{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-plus-circle text-primary me-2"></i>Yeni Kurs Oluştur
+                    </h3>
+                    <p class="text-muted mb-0">Sınavınız için kişiselleştirilmiş çalışma planı oluşturun</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.title.label(class="form-label") }}
+                                    {{ form.title(class="form-control", placeholder="Örn: Algoritma ve Veri Yapıları Sınavı") }}
+                                    {% if form.title.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.title.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.subject.label(class="form-label") }}
+                                    {{ form.subject(class="form-control", placeholder="Örn: Algoritma, Matematik, Fizik") }}
+                                    {% if form.subject.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.subject.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.target_grade.label(class="form-label") }}
+                                    {{ form.target_grade(class="form-select") }}
+                                    {% if form.target_grade.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.target_grade.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.exam_date.label(class="form-label") }}
+                                    {{ form.exam_date(class="form-control") }}
+                                    {% if form.exam_date.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.exam_date.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.current_level.label(class="form-label") }}
+                                    {{ form.current_level(class="form-select") }}
+                                    {% if form.current_level.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.current_level.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.study_hours_per_day.label(class="form-label") }}
+                                    {{ form.study_hours_per_day(class="form-control", min="1", max="12") }}
+                                    {% if form.study_hours_per_day.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {% for error in form.study_hours_per_day.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- AI Preview -->
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-robot me-2"></i>AI Planlama
+                            </h6>
+                            <p class="mb-0">
+                                <strong>{{ current_user.preferred_ai.title() }}</strong> kullanarak size özel çalışma planı oluşturulacak. 
+                                Plan, sınav tarihinize ve mevcut seviyenize göre optimize edilecek.
+                            </p>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary me-md-2">
+                                <i class="fas fa-arrow-left me-2"></i>İptal
+                            </a>
+                            {{ form.submit(class="btn btn-primary btn-lg") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Tips -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-lightbulb me-2"></i>İpuçları
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-calendar text-primary me-2"></i>Sınav Tarihi</h6>
+                            <p class="small text-muted">Gerçekçi bir sınav tarihi girin. AI, kalan süreye göre planınızı optimize edecek.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-signal text-primary me-2"></i>Mevcut Seviye</h6>
+                            <p class="small text-muted">Kendinizi dürüstçe değerlendirin. Bu, AI'nın doğru plan oluşturması için önemli.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-clock text-primary me-2"></i>Çalışma Saati</h6>
+                            <p class="small text-muted">Günlük ne kadar çalışabileceğinizi düşünün. Tutarlılık önemli!</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-target text-primary me-2"></i>Hedef Not</h6>
+                            <p class="small text-muted">Ulaşmak istediğiniz notu seçin. AI buna göre planınızı zorlaştıracak.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Set minimum date to today
+document.addEventListener('DOMContentLoaded', function() {
+    const examDateInput = document.getElementById('exam_date');
+    const today = new Date().toISOString().split('T')[0];
+    examDateInput.setAttribute('min', today);
+    
+    // Update study hours preview
+    const studyHoursInput = document.getElementById('study_hours_per_day');
+    const examDateInput2 = document.getElementById('exam_date');
+    
+    function updatePreview() {
+        const studyHours = parseInt(studyHoursInput.value) || 2;
+        const examDate = new Date(examDateInput2.value);
+        const today = new Date();
+        const daysLeft = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
+        
+        if (daysLeft > 0) {
+            const totalHours = daysLeft * studyHours;
+            const preview = document.getElementById('study-preview');
+            if (preview) {
+                preview.textContent = `${daysLeft} günde toplam ${totalHours} saat çalışma planlanacak.`;
+            }
+        }
+    }
+    
+    studyHoursInput.addEventListener('input', updatePreview);
+    examDateInput2.addEventListener('change', updatePreview);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Test - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Test Header -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-clipboard-check me-2"></i>
+                        Test - Hafta {{ week_number }}
+                    </h3>
+                    <small>{{ course.title }} - {{ course.subject }}</small>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Bu test {{ test_questions|length }} sorudan oluşmaktadır. Her soruyu dikkatli bir şekilde okuyun ve doğru cevabı işaretleyin.</p>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Test sonucuna göre seviyeniz belirlenecek ve kurs planınız güncellenecektir.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Form -->
+            <form method="POST" action="{{ url_for('test_result', course_id=course.id, week_number=week_number) }}">
+                {% for question in test_questions %}
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5>Soru {{ loop.index }}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="question-text mb-3">{{ question.question }}</p>
+                        
+                        <div class="form-group">
+                            {% for option in question.options %}
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="radio" 
+                                       name="question_{{ loop.index0 }}" 
+                                       id="q{{ loop.index0 }}_option{{ loop.index0 }}" 
+                                       value="{{ option }}">
+                                <label class="form-check-label" for="q{{ loop.index0 }}_option{{ loop.index0 }}">
+                                    {{ option }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        {% if question.explanation %}
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                    data-bs-toggle="collapse" 
+                                    data-bs-target="#explanation{{ loop.index0 }}">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                Açıklama Göster
+                            </button>
+                            <div class="collapse mt-2" id="explanation{{ loop.index0 }}">
+                                <div class="alert alert-light">
+                                    <strong>Açıklama:</strong> {{ question.explanation }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+
+                <!-- Submit Button -->
+                <div class="text-center mb-4">
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-check-circle me-2"></i>
+                        Testi Tamamla
+                    </button>
+                </div>
+            </form>
+
+            <!-- Back Button -->
+            <div class="text-center">
+                <a href="{{ url_for('course_detail', course_id=course.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Kurs Detaylarına Dön
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.question-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-check-input:checked {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.form-check-label {
+    font-size: 1rem;
+    color: #555;
+}
+
+.card {
+    border-left: 4px solid #007bff;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border: none;
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    font-weight: 500;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #1ea085 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+</style>
+
+<script>
+// Auto-save answers to localStorage
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('input[type="radio"]');
+    
+    // Load saved answers
+    inputs.forEach(input => {
+        const savedValue = localStorage.getItem(input.name);
+        if (savedValue === input.value) {
+            input.checked = true;
+        }
+    });
+    
+    // Save answers on change
+    inputs.forEach(input => {
+        input.addEventListener('change', function() {
+            localStorage.setItem(this.name, this.value);
+        });
+    });
+    
+    // Clear localStorage on form submit
+    form.addEventListener('submit', function() {
+        inputs.forEach(input => {
+            localStorage.removeItem(input.name);
+        });
+    });
+});
+</script>
+{% endblock %}

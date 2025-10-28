@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}AI Seçimi - EduCoach{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-robot text-primary me-2"></i>AI Seçimi
+                    </h3>
+                    <p class="text-muted mb-0">Çalışma planlarınız için tercih ettiğiniz AI'yı seçin</p>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row g-4">
+                            <!-- ChatGPT -->
+                            <div class="col-md-4">
+                                <div class="ai-option-card {% if form.preferred_ai.data == 'chatgpt' %}selected{% endif %}" 
+                                     onclick="selectAI('chatgpt')">
+                                    <div class="ai-icon">
+                                        <i class="fas fa-comments"></i>
+                                    </div>
+                                    <h5>ChatGPT</h5>
+                                    <p class="text-muted small">OpenAI'nin güçlü dil modeli. Detaylı açıklamalar ve kapsamlı planlar sunar.</p>
+                                    <div class="features">
+                                        <span class="badge bg-success">Detaylı</span>
+                                        <span class="badge bg-info">Kapsamlı</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Gemini -->
+                            <div class="col-md-4">
+                                <div class="ai-option-card {% if form.preferred_ai.data == 'gemini' %}selected{% endif %}" 
+                                     onclick="selectAI('gemini')">
+                                    <div class="ai-icon">
+                                        <i class="fas fa-gem"></i>
+                                    </div>
+                                    <h5>Gemini</h5>
+                                    <p class="text-muted small">Google'ın çok modlu AI'si. Hızlı ve etkili çözümler üretir.</p>
+                                    <div class="features">
+                                        <span class="badge bg-warning">Hızlı</span>
+                                        <span class="badge bg-primary">Etkili</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Claude -->
+                            <div class="col-md-4">
+                                <div class="ai-option-card {% if form.preferred_ai.data == 'claude' %}selected{% endif %}" 
+                                     onclick="selectAI('claude')">
+                                    <div class="ai-icon">
+                                        <i class="fas fa-brain"></i>
+                                    </div>
+                                    <h5>Claude</h5>
+                                    <p class="text-muted small">Anthropic'in güvenli AI'si. Analitik ve mantıklı yaklaşımlar sunar.</p>
+                                    <div class="features">
+                                        <span class="badge bg-danger">Analitik</span>
+                                        <span class="badge bg-secondary">Mantıklı</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            {{ form.preferred_ai(class="d-none") }}
+                            <div class="d-grid">
+                                {{ form.submit(class="btn btn-primary btn-lg") }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- AI Comparison -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>AI Karşılaştırması
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Özellik</th>
+                                    <th class="text-center">ChatGPT</th>
+                                    <th class="text-center">Gemini</th>
+                                    <th class="text-center">Claude</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Hız</td>
+                                    <td class="text-center"><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                    <td class="text-center"><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                    <td class="text-center"><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>Detay</td>
+                                    <td class="text-center"><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                    <td class="text-center"><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                    <td class="text-center"><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>Yaratıcılık</td>
+                                    <td class="text-center"><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                    <td class="text-center"><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                    <td class="text-center"><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>Analiz</td>
+                                    <td class="text-center"><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                    <td class="text-center"><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                    <td class="text-center"><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.ai-option-card {
+    border: 2px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    height: 100%;
+}
+
+.ai-option-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(99, 102, 241, 0.15);
+}
+
+.ai-option-card.selected {
+    border-color: var(--primary-color);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+}
+
+.ai-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    color: white;
+    font-size: 24px;
+}
+
+.features {
+    margin-top: 16px;
+}
+
+.features .badge {
+    margin: 2px;
+}
+</style>
+
+<script>
+function selectAI(aiType) {
+    // Remove selected class from all cards
+    document.querySelectorAll('.ai-option-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add selected class to clicked card
+    event.currentTarget.classList.add('selected');
+    
+    // Update hidden input
+    document.getElementById('preferred_ai').value = aiType;
+}
+</script>
+{% endblock %}

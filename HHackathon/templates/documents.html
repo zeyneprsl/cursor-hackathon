@@ -1,0 +1,263 @@
+{% extends "base.html" %}
+
+{% block title %}Dokümanlar - EduCoach{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">
+                                <i class="fas fa-file-alt text-primary me-2"></i>Doküman Paylaşımı
+                            </h2>
+                            <p class="text-muted mb-0">Diğer öğrencilerle dokümanlarınızı paylaşın ve kredi kazanın</p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <a href="{{ url_for('upload_document') }}" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Doküman Yükle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ documents|length }}</div>
+                <h6>Toplam Doküman</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ documents|sum(attribute='download_count') }}</div>
+                <h6>Toplam İndirme</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ current_user.credits }}</div>
+                <h6>Kredi Bakiyeniz</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">100</div>
+                <h6>Yükleme Ücreti</h6>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter and Search -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                <input type="text" class="form-control" placeholder="Doküman ara..." id="searchInput">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <select class="form-select" id="subjectFilter">
+                <option value="">Tüm Konular</option>
+                <option value="Algoritma">Algoritma</option>
+                <option value="Matematik">Matematik</option>
+                <option value="Fizik">Fizik</option>
+                <option value="Kimya">Kimya</option>
+                <option value="Biyoloji">Biyoloji</option>
+                <option value="Tarih">Tarih</option>
+                <option value="Coğrafya">Coğrafya</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Documents Grid -->
+    <div class="row" id="documentsGrid">
+        {% if documents %}
+            {% for doc in documents %}
+            <div class="col-md-6 col-lg-4 mb-4 document-card" data-title="{{ doc.title|lower }}" data-subject="{{ doc.subject }}">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-start mb-3">
+                            <div class="flex-shrink-0">
+                                <div class="document-icon">
+                                    <i class="fas fa-file-pdf"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <h6 class="card-title mb-1">{{ doc.title }}</h6>
+                                <span class="badge bg-primary">{{ doc.subject }}</span>
+                            </div>
+                        </div>
+                        
+                        {% if doc.description %}
+                        <p class="card-text small text-muted">{{ doc.description[:100] }}{% if doc.description|length > 100 %}...{% endif %}</p>
+                        {% endif %}
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div class="small text-muted">
+                                <i class="fas fa-download me-1"></i>{{ doc.download_count }} indirme
+                            </div>
+                            <div class="small text-muted">
+                                <i class="fas fa-user me-1"></i>{{ doc.user.username }}
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-calendar me-1"></i>{{ doc.created_at.strftime('%d.%m.%Y') }}
+                            </small>
+                            <button class="btn btn-sm btn-outline-primary" disabled>
+                                <i class="fas fa-download me-1"></i>İndir
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-file-alt text-muted" style="font-size: 4rem;"></i>
+                    <h4 class="text-muted mt-3">Henüz doküman yok</h4>
+                    <p class="text-muted">İlk dokümanı siz paylaşın ve kredi kazanmaya başlayın!</p>
+                    <a href="{{ url_for('upload_document') }}" class="btn btn-primary">
+                        <i class="fas fa-upload me-2"></i>İlk Dokümanımı Paylaş
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- How It Works -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Nasıl Çalışır?
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="step-icon">
+                                <i class="fas fa-upload"></i>
+                            </div>
+                            <h6>1. Doküman Yükle</h6>
+                            <p class="small text-muted">Çalışma materyallerinizi platforma yükleyin</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="step-icon">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <h6>2. Kredi Kazan</h6>
+                            <p class="small text-muted">Her yüklediğiniz doküman için 100 kredi kazanın</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="step-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <h6>3. Diğerlerini Gör</h6>
+                            <p class="small text-muted">Diğer öğrencilerin paylaştığı dokümanları görün</p>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="step-icon">
+                                <i class="fas fa-download"></i>
+                            </div>
+                            <h6>4. İndir ve Çalış</h6>
+                            <p class="small text-muted">İhtiyacınız olan dokümanları indirin</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.document-card {
+    transition: all 0.3s ease;
+}
+
+.document-card:hover {
+    transform: translateY(-2px);
+}
+
+.document-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 18px;
+}
+
+.stats-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.step-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    color: white;
+    font-size: 24px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const subjectFilter = document.getElementById('subjectFilter');
+    const documentsGrid = document.getElementById('documentsGrid');
+    
+    function filterDocuments() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedSubject = subjectFilter.value;
+        const documentCards = documentsGrid.querySelectorAll('.document-card');
+        
+        documentCards.forEach(card => {
+            const title = card.dataset.title;
+            const subject = card.dataset.subject;
+            
+            const matchesSearch = title.includes(searchTerm);
+            const matchesSubject = !selectedSubject || subject === selectedSubject;
+            
+            if (matchesSearch && matchesSubject) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+    
+    searchInput.addEventListener('input', filterDocuments);
+    subjectFilter.addEventListener('change', filterDocuments);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Test Sonucu - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <!-- Test Result Header -->
+            <div class="card mb-4">
+                <div class="card-header bg-{% if score_percentage >= 80 %}success{% elif score_percentage >= 60 %}warning{% else %}danger{% endif %} text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-trophy me-2"></i>
+                        Test Sonucu - Hafta {{ week_number }}
+                    </h3>
+                    <small>{{ course.title }} - {{ course.subject }}</small>
+                </div>
+                <div class="card-body text-center">
+                    <div class="score-display mb-4">
+                        <div class="score-circle mx-auto mb-3">
+                            <span class="score-text">{{ "%.0f"|format(score_percentage) }}%</span>
+                        </div>
+                        <h4 class="score-level text-{% if score_percentage >= 80 %}success{% elif score_percentage >= 60 %}warning{% else %}danger{% endif %}">
+                            {{ level }} Seviye
+                        </h4>
+                    </div>
+                    
+                    <div class="alert alert-{% if score_percentage >= 80 %}success{% elif score_percentage >= 60 %}warning{% else %}danger{% endif %}">
+                        {% if score_percentage >= 80 %}
+                            <i class="fas fa-star me-2"></i>
+                            <strong>Tebrikler!</strong> Mükemmel bir performans gösterdiniz. {{ level }} seviyedesiniz.
+                        {% elif score_percentage >= 60 %}
+                            <i class="fas fa-thumbs-up me-2"></i>
+                            <strong>İyi iş!</strong> {{ level }} seviyedesiniz. Biraz daha çalışarak ileri seviyeye geçebilirsiniz.
+                        {% else %}
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>Daha fazla çalışma gerekli.</strong> {{ level }} seviyedesiniz. Konuları tekrar gözden geçirin.
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Analysis -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar text-primary me-2"></i>Detaylı Analiz</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="analysis-item">
+                                <h6>Genel Performans</h6>
+                                <div class="progress mb-2">
+                                    <div class="progress-bar bg-{% if score_percentage >= 80 %}success{% elif score_percentage >= 60 %}warning{% else %}danger{% endif %}" 
+                                         style="width: {{ score_percentage }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ "%.0f"|format(score_percentage) }}% doğru cevap</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="analysis-item">
+                                <h6>Seviye Değerlendirmesi</h6>
+                                <div class="level-indicator">
+                                    <span class="badge bg-{% if level == 'İleri' %}success{% elif level == 'Orta' %}warning{% else %}danger{% endif %} fs-6">
+                                        {{ level }}
+                                    </span>
+                                </div>
+                                <small class="text-muted">Mevcut seviyeniz</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-lightbulb text-warning me-2"></i>Öneriler</h5>
+                </div>
+                <div class="card-body">
+                    {% if score_percentage >= 80 %}
+                    <div class="recommendations">
+                        <h6 class="text-success">🎉 Mükemmel Performans!</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check-circle text-success me-2"></i>Bu konuyu başarıyla öğrendiniz</li>
+                            <li><i class="fas fa-arrow-right text-primary me-2"></i>Bir sonraki konuya geçebilirsiniz</li>
+                            <li><i class="fas fa-star text-warning me-2"></i>İleri seviye kaynakları inceleyebilirsiniz</li>
+                            <li><i class="fas fa-users text-info me-2"></i>Arkadaşlarınıza yardım edebilirsiniz</li>
+                        </ul>
+                    </div>
+                    {% elif score_percentage >= 60 %}
+                    <div class="recommendations">
+                        <h6 class="text-warning">📚 İyi Başlangıç!</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-book text-primary me-2"></i>Konuyu tekrar gözden geçirin</li>
+                            <li><i class="fas fa-video text-danger me-2"></i>Ek video kaynakları izleyin</li>
+                            <li><i class="fas fa-file-alt text-info me-2"></i>Ders notlarınızı gözden geçirin</li>
+                            <li><i class="fas fa-redo text-warning me-2"></i>Pratik yapmaya devam edin</li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <div class="recommendations">
+                        <h6 class="text-danger">🔄 Daha Fazla Çalışma Gerekli</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-backward text-primary me-2"></i>Konuyu baştan gözden geçirin</li>
+                            <li><i class="fas fa-play-circle text-danger me-2"></i>Temel kavramları tekrar izleyin</li>
+                            <li><i class="fas fa-question-circle text-info me-2"></i>Anlamadığınız noktaları belirleyin</li>
+                            <li><i class="fas fa-handshake text-success me-2"></i>Öğretmeninizden yardım isteyin</li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Next Steps -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5><i class="fas fa-forward text-success me-2"></i>Sonraki Adımlar</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="next-step-item p-3 border rounded mb-3">
+                                <h6><i class="fas fa-graduation-cap text-primary me-2"></i>Detaylı Rehberlik</h6>
+                                <p class="text-muted">Konu hakkında daha detaylı bilgi alın</p>
+                                <a href="{{ url_for('course_detail', course_id=course.id) }}" class="btn btn-sm btn-outline-primary">
+                                    Rehberliğe Git
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="next-step-item p-3 border rounded mb-3">
+                                <h6><i class="fas fa-redo text-warning me-2"></i>Testi Tekrarla</h6>
+                                <p class="text-muted">Bu testi tekrar çözerek gelişiminizi takip edin</p>
+                                <a href="{{ url_for('take_test', course_id=course.id, week_number=week_number) }}" class="btn btn-sm btn-outline-warning">
+                                    Testi Tekrarla
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center">
+                <a href="{{ url_for('course_detail', course_id=course.id) }}" class="btn btn-primary me-2">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Kurs Detaylarına Dön
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-home me-2"></i>
+                    Dashboard'a Git
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.score-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 16px rgba(0,123,255,0.3);
+}
+
+.score-text {
+    font-size: 2rem;
+    font-weight: bold;
+    color: white;
+}
+
+.analysis-item {
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.recommendations ul li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.recommendations ul li:last-child {
+    border-bottom: none;
+}
+
+.next-step-item {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    transition: all 0.3s ease;
+}
+
+.next-step-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.progress {
+    height: 8px;
+    border-radius: 4px;
+}
+
+.progress-bar {
+    border-radius: 4px;
+}
+
+.level-indicator {
+    text-align: center;
+    padding: 1rem 0;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,1175 @@
+{% extends "base.html" %}
+
+{% block title %}{{ course.title }} - EduCoach{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Course Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">
+                                <i class="fas fa-book text-primary me-2"></i>{{ course.title }}
+                            </h2>
+                            <p class="text-muted mb-3">{{ course.subject }} - Hedef Not: {{ course.target_grade }}</p>
+                            <div class="d-flex gap-4 small text-muted">
+                                <span><i class="fas fa-calendar me-1"></i>{{ course.exam_date.strftime('%d.%m.%Y') }}</span>
+                                <span><i class="fas fa-clock me-1"></i>{{ course.study_hours_per_day }} saat/gün</span>
+                                <span><i class="fas fa-signal me-1"></i>{{ course.current_level }}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="text-success fw-bold fs-4">{{ course.exam_date.strftime('%d.%m.%Y') }}</div>
+                            <div class="progress mt-2" style="height: 8px;">
+                                <div class="progress-bar bg-success" style="width: 50%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Study Plans -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-calendar-alt me-2"></i>Çalışma Planı
+                    </h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleView('list')">
+                            <i class="fas fa-list me-1"></i>Liste
+                        </button>
+                        <button class="btn btn-sm btn-primary" onclick="toggleView('roadmap')">
+                            <i class="fas fa-route me-1"></i>Roadmap
+                        </button>
+                        <span class="badge bg-primary">{{ study_plans|length }} Hafta</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Roadmap View -->
+                    <div id="roadmap-view" style="display: none;">
+                        <div class="roadmap-container">
+                            <div class="mermaid" id="roadmap-diagram">
+                                graph TD
+                                    {% for plan in study_plans %}
+                                    {% set topics = plan.topics|from_json %}
+                                    {% set daily_activities = plan.daily_activities|from_json %}
+                                    {% set tips = plan.tips|from_json %}
+                                    
+                                    H{{ plan.week_number }}["Hafta {{ plan.week_number }}<br/>{{ plan.study_hours }} saat"]
+                                    
+                                    {% for topic in topics %}
+                                        {% if topic is mapping and topic.title %}
+                                            T{{ plan.week_number }}_{{ loop.index }}["{{ topic.title }}"]
+                                            H{{ plan.week_number }} --> T{{ plan.week_number }}_{{ loop.index }}
+                                            
+                                            {% if topic.resources %}
+                                                {% for resource in topic.resources %}
+                                                    R{{ plan.week_number }}_{{ loop.index }}_{{ loop.index0 }}["{{ resource.title }}<br/>({{ resource.duration }})"]
+                                                    T{{ plan.week_number }}_{{ loop.index }} --> R{{ plan.week_number }}_{{ loop.index }}_{{ loop.index0 }}
+                                                {% endfor %}
+                                            {% endif %}
+                                            
+                                            {% if topic.test_questions %}
+                                                TEST{{ plan.week_number }}_{{ loop.index }}["Test<br/>({{ topic.test_questions|length }} soru)"]
+                                                T{{ plan.week_number }}_{{ loop.index }} --> TEST{{ plan.week_number }}_{{ loop.index }}
+                                            {% endif %}
+                                        {% else %}
+                                            T{{ plan.week_number }}_{{ loop.index }}["{{ topic }}"]
+                                            H{{ plan.week_number }} --> T{{ plan.week_number }}_{{ loop.index }}
+                                        {% endif %}
+                                    {% endfor %}
+                                    
+                                    {% if plan.week_number < study_plans|length %}
+                                    H{{ plan.week_number }} --> H{{ plan.week_number + 1 }}
+                                    {% endif %}
+                                    {% endfor %}
+                                    
+                                    classDef weekStyle fill:#6366f1,stroke:#4f46e5,stroke-width:3px,color:#fff
+                                    classDef topicStyle fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
+                                    classDef resourceStyle fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
+                                    classDef testStyle fill:#ef4444,stroke:#dc2626,stroke-width:2px,color:#fff
+                                    
+                                    {% for plan in study_plans %}
+                                    class H{{ plan.week_number }} weekStyle
+                                    {% set topics = plan.topics|from_json %}
+                                    {% for topic in topics %}
+                                        {% if topic is mapping and topic.title %}
+                                            class T{{ plan.week_number }}_{{ loop.index }} topicStyle
+                                            {% if topic.resources %}
+                                                {% for resource in topic.resources %}
+                                                    class R{{ plan.week_number }}_{{ loop.index }}_{{ loop.index0 }} resourceStyle
+                                                {% endfor %}
+                                            {% endif %}
+                                            {% if topic.test_questions %}
+                                                class TEST{{ plan.week_number }}_{{ loop.index }} testStyle
+                                            {% endif %}
+                                        {% else %}
+                                            class T{{ plan.week_number }}_{{ loop.index }} topicStyle
+                                        {% endif %}
+                                    {% endfor %}
+                                    {% endfor %}
+                            </div>
+                        </div>
+                        
+                        <!-- Detailed Roadmap -->
+                        <div class="detailed-roadmap mt-4">
+                            {% for plan in study_plans %}
+                            {% set topics = plan.topics|from_json %}
+                            {% set daily_activities = plan.daily_activities|from_json %}
+                            {% set tips = plan.tips|from_json %}
+                            <div class="roadmap-week">
+                                <div class="roadmap-week-header">
+                                    <h4 class="roadmap-week-title">
+                                        <i class="fas fa-calendar-week text-primary me-2"></i>
+                                        Hafta {{ plan.week_number }}
+                                    </h4>
+                                    <div class="roadmap-week-stats">
+                                        <span class="badge bg-success">{{ plan.study_hours }} saat</span>
+                                        <span class="badge bg-info">{{ topics|length }} konu</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="roadmap-content">
+                                    <div class="roadmap-topics">
+                                        <h6><i class="fas fa-bookmark text-warning me-2"></i>Konular</h6>
+                                        <div class="topic-tags">
+                                            {% for topic in topics %}
+                                                {% if topic is mapping and topic.title %}
+                                                    <!-- Detailed topic in roadmap -->
+                                                    <div class="roadmap-topic-card">
+                                                        <div class="topic-header">
+                                                            <i class="fas fa-bookmark text-primary me-2"></i>
+                                                            <strong>{{ topic.title }}</strong>
+                                                        </div>
+                                                        {% if topic.resources %}
+                                                        <div class="topic-resources">
+                                                            {% for resource in topic.resources %}
+                                                            <div class="resource-item">
+                                                                <a href="{{ resource.url }}" target="_blank" class="resource-link">
+                                                                    <i class="fas fa-{% if resource.type == 'video' %}play-circle text-danger{% elif resource.type == 'article' %}newspaper text-info{% elif resource.type == 'document' %}file-pdf text-warning{% elif resource.type == 'practice' %}pencil-alt text-success{% elif resource.type == 'case' %}gavel text-secondary{% else %}link text-muted{% endif %} me-1"></i>
+                                                                    {{ resource.title }}
+                                                                    <small class="text-muted">({{ resource.duration }})</small>
+                                                                </a>
+                                                            </div>
+                                                            {% endfor %}
+                                                        </div>
+                                                        {% endif %}
+                                                        {% if topic.test_questions %}
+                                                        <div class="topic-test">
+                                                            {% set topic_id = topic.title.lower().replace(' ', '-').replace('ı', 'i').replace('ş', 's').replace('ğ', 'g').replace('ü', 'u').replace('ö', 'o').replace('ç', 'c') %}
+                                                            <a href="{{ url_for('topic_detail', course_id=course.id, week_number=plan.week_number, topic_id=topic_id) }}" 
+                                                               class="btn btn-sm btn-primary me-1">
+                                                                <i class="fas fa-graduation-cap me-1"></i>
+                                                                Detaylı Rehberlik
+                                                            </a>
+                                                            <a href="{{ url_for('take_test', course_id=course.id, week_number=plan.week_number) }}" 
+                                                               class="btn btn-sm btn-outline-success">
+                                                                <i class="fas fa-clipboard-check me-1"></i>
+                                                                Test ({{ topic.test_questions|length }})
+                                                            </a>
+                                                        </div>
+                                                        {% endif %}
+                                                    </div>
+                                                {% else %}
+                                                    <!-- Simple topic -->
+                                                    <span class="topic-tag">{{ topic }}</span>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    
+                                    {% if daily_activities %}
+                                    <div class="roadmap-activities">
+                                        <h6><i class="fas fa-tasks text-primary me-2"></i>Günlük Aktiviteler</h6>
+                                        <div class="activity-timeline">
+                                            {% for day_plan in daily_activities %}
+                                            <div class="timeline-item">
+                                                <div class="timeline-marker"></div>
+                                                <div class="timeline-content">
+                                                    <h6 class="timeline-day">{{ day_plan.day }}</h6>
+                                                    <div class="timeline-activities">
+                                                        {% for activity in day_plan.activities %}
+                                                        <div class="activity-item">
+                                                            <span class="activity-icon">
+                                                                {% if activity.type == 'video' %}
+                                                                    <i class="fas fa-play-circle text-danger"></i>
+                                                                {% elif activity.type == 'reading' %}
+                                                                    <i class="fas fa-book text-info"></i>
+                                                                {% elif activity.type == 'practice' %}
+                                                                    <i class="fas fa-pencil-alt text-success"></i>
+                                                                {% elif activity.type == 'review' %}
+                                                                    <i class="fas fa-redo text-warning"></i>
+                                                                {% else %}
+                                                                    <i class="fas fa-tasks text-secondary"></i>
+                                                                {% endif %}
+                                                            </span>
+                                                            <span class="activity-text">{{ activity.description }}</span>
+                                                            <span class="activity-duration">{{ activity.duration }}</span>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    
+                                    {% if tips %}
+                                    <div class="roadmap-tips">
+                                        <h6><i class="fas fa-lightbulb text-warning me-2"></i>İpuçları</h6>
+                                        <div class="tips-list">
+                                            {% for tip in tips %}
+                                            <div class="tip-item">
+                                                <i class="fas fa-star text-warning me-2"></i>
+                                                <span>{{ tip }}</span>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- List View -->
+                    <div id="list-view">
+                        {% if study_plans %}
+                        {% for plan in study_plans %}
+                        <div class="study-plan-card mb-4">
+                            <div class="row">
+                                <div class="col-md-2">
+                                    <div class="week-number">
+                                        <h3 class="text-primary mb-0">{{ plan.week_number }}</h3>
+                                        <small class="text-muted">Hafta</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <h6 class="fw-bold mb-2">Bu Hafta Konular</h6>
+                                    <div class="topics-list mb-3">
+                                        {% set topics = plan.topics|from_json %}
+                                        {% for topic in topics %}
+                                            {% if topic is mapping and topic.title %}
+                                                <!-- Detailed topic with resources -->
+                                                <div class="topic-card mb-3 p-3 border rounded">
+                                                    <h6 class="topic-title mb-2">
+                                                        <i class="fas fa-bookmark text-primary me-2"></i>
+                                                        {{ topic.title }}
+                                                    </h6>
+                                                    
+                                                    {% if topic.resources %}
+                                                    <div class="topic-resources mb-2">
+                                                        <small class="text-muted">Kaynaklar:</small>
+                                                        {% for resource in topic.resources %}
+                                                        <div class="resource-item mt-1">
+                                                            <a href="{{ resource.url }}" target="_blank" class="resource-link text-decoration-none">
+                                                                <i class="fas fa-{% if resource.type == 'video' %}play-circle text-danger{% elif resource.type == 'article' %}newspaper text-info{% elif resource.type == 'document' %}file-pdf text-warning{% elif resource.type == 'practice' %}pencil-alt text-success{% elif resource.type == 'case' %}gavel text-secondary{% else %}link text-muted{% endif %} me-2"></i>
+                                                                {{ resource.title }}
+                                                                <small class="text-muted">({{ resource.duration }})</small>
+                                                                <i class="fas fa-external-link-alt ms-1 text-muted"></i>
+                                                            </a>
+                                                        </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <div class="topic-actions mt-2">
+                                                        {% set topic_id = topic.title.lower().replace(' ', '-').replace('ı', 'i').replace('ş', 's').replace('ğ', 'g').replace('ü', 'u').replace('ö', 'o').replace('ç', 'c') %}
+                                                        <a href="{{ url_for('topic_detail', course_id=course.id, week_number=plan.week_number, topic_id=topic_id) }}" 
+                                                           class="btn btn-sm btn-primary">
+                                                            <i class="fas fa-graduation-cap me-1"></i>
+                                                            Detaylı Rehberlik
+                                                        </a>
+                                                        {% if topic.test_questions %}
+                                                        <a href="{{ url_for('take_test', course_id=course.id, week_number=plan.week_number) }}" 
+                                                           class="btn btn-sm btn-outline-success ms-1">
+                                                            <i class="fas fa-clipboard-check me-1"></i>
+                                                            Test ({{ topic.test_questions|length }})
+                                                        </a>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <!-- Simple topic -->
+                                                <span class="badge bg-light text-dark me-2 mb-2">{{ topic }}</span>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </div>
+                                    
+                                    <!-- Daily Activities -->
+                                    {% if plan.daily_activities %}
+                                    {% set daily_activities = plan.daily_activities|from_json %}
+                                    <div class="daily-activities">
+                                        <h6 class="fw-bold mb-2">Günlük Aktiviteler</h6>
+                                        {% for day_plan in daily_activities %}
+                                        <div class="day-plan mb-2">
+                                            <strong class="text-primary">{{ day_plan.day }}:</strong>
+                                            {% for activity in day_plan.activities %}
+                                            <div class="activity-item ms-3 mb-1 d-flex align-items-center">
+                                                <button class="activity-checkbox me-2" 
+                                                        data-course-id="{{ course.id }}"
+                                                        data-week-number="{{ plan.week_number }}"
+                                                        data-activity-id="{{ day_plan.day }}_{{ activity.type }}_{{ activity.description[:20] }}"
+                                                        onclick="toggleActivity(this)">
+                                                    {% set activity_id = day_plan.day + '_' + activity.type + '_' + activity.description[:20] %}
+                                                    {% if progress_data.get(plan.week_number, {}).get(activity_id, False) %}
+                                                        <i class="fas fa-check-circle text-success"></i>
+                                                    {% else %}
+                                                        <i class="far fa-circle text-muted"></i>
+                                                    {% endif %}
+                                                </button>
+                                                <span class="activity-icon me-2">
+                                                    {% if activity.type == 'video' %}
+                                                        <i class="fas fa-play-circle text-danger"></i>
+                                                    {% elif activity.type == 'reading' %}
+                                                        <i class="fas fa-book text-info"></i>
+                                                    {% elif activity.type == 'practice' %}
+                                                        <i class="fas fa-pencil-alt text-success"></i>
+                                                    {% elif activity.type == 'review' %}
+                                                        <i class="fas fa-redo text-warning"></i>
+                                                    {% elif activity.type == 'test' %}
+                                                        <i class="fas fa-clipboard-check text-primary"></i>
+                                                    {% else %}
+                                                        <i class="fas fa-tasks text-secondary"></i>
+                                                    {% endif %}
+                                                </span>
+                                                {% if activity.resource_url %}
+                                                    <a href="{{ activity.resource_url }}" target="_blank" class="activity-link text-decoration-none flex-grow-1">
+                                                        <span class="activity-desc">{{ activity.description }}</span>
+                                                        <small class="text-muted ms-2">({{ activity.duration }})</small>
+                                                        <i class="fas fa-external-link-alt ms-1 text-muted"></i>
+                                                    </a>
+                                                {% else %}
+                                                    <span class="activity-desc flex-grow-1">{{ activity.description }}</span>
+                                                    <small class="text-muted ms-2">({{ activity.duration }})</small>
+                                                {% endif %}
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                    
+                                    <!-- Tips -->
+                                    {% if plan.tips %}
+                                    {% set tips = plan.tips|from_json %}
+                                    <div class="tips-section mt-3">
+                                        <h6 class="fw-bold mb-2">💡 İpuçları</h6>
+                                        {% for tip in tips %}
+                                        <div class="tip-item mb-1">
+                                            <i class="fas fa-lightbulb text-warning me-2"></i>
+                                            <small>{{ tip }}</small>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-2 text-md-end">
+                                    <div class="study-hours">
+                                        <h5 class="text-success mb-0">{{ plan.study_hours }}</h5>
+                                        <small class="text-muted">saat</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-times text-muted" style="font-size: 3rem;"></i>
+                            <h5 class="text-muted mt-3">Çalışma planı henüz oluşturulmadı</h5>
+                            <p class="text-muted">AI çalışma planınızı hazırlıyor...</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <h5>Test Çöz</h5>
+                    <p class="text-muted">Bilginizi test edin ve ilerlemenizi görün</p>
+                    <button class="btn btn-outline-primary" disabled>
+                        <i class="fas fa-play me-2"></i>Test Başlat
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <h5>Doküman Ekle</h5>
+                    <p class="text-muted">Çalışma materyallerinizi paylaşın</p>
+                    <a href="{{ url_for('upload_document') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-upload me-2"></i>Doküman Yükle
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <div class="feature-icon mb-3">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <h5>İlerleme</h5>
+                    <p class="text-muted">Çalışma ilerlemenizi takip edin</p>
+                    <button class="btn btn-outline-primary" disabled>
+                        <i class="fas fa-chart-bar me-2"></i>İlerleme Gör
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Course Stats -->
+    <div class="row mt-4">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ study_plans|length }}</div>
+                <h6>Toplam Hafta</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ course.study_hours_per_day * 7 }}</div>
+                <h6>Haftalık Saat</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ course.study_hours_per_day * 7 * study_plans|length }}</div>
+                <h6>Toplam Saat</h6>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ course.target_grade }}</div>
+                <h6>Hedef Not</h6>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.study-plan-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+}
+
+.study-plan-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.week-number {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+    border-radius: 12px;
+}
+
+.topics-list {
+    min-height: 40px;
+}
+
+.study-hours {
+    text-align: center;
+    padding: 20px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(34, 197, 94, 0.1));
+    border-radius: 12px;
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    color: white;
+    font-size: 24px;
+}
+
+.stats-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid var(--border-color);
+}
+
+.stats-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.daily-activities {
+    background: rgba(99, 102, 241, 0.05);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.day-plan {
+    border-left: 3px solid var(--primary-color);
+    padding-left: 10px;
+    margin-bottom: 15px;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    padding: 5px 0;
+}
+
+.activity-icon {
+    font-size: 16px;
+}
+
+.activity-desc {
+    flex: 1;
+    font-size: 14px;
+}
+
+.tips-section {
+    background: rgba(255, 193, 7, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+}
+
+.tip-item {
+    display: flex;
+    align-items: flex-start;
+    padding: 3px 0;
+}
+
+/* Roadmap Styles */
+.roadmap-container {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.roadmap-week {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-left: 4px solid var(--primary-color);
+}
+
+.roadmap-week-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.roadmap-week-title {
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.roadmap-week-stats {
+    display: flex;
+    gap: 10px;
+}
+
+.topic-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.topic-tag {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.activity-timeline {
+    position: relative;
+    margin-top: 15px;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+    padding-left: 30px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 12px;
+    height: 12px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    border: 3px solid white;
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.timeline-content {
+    background: #f8fafc;
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 3px solid var(--primary-color);
+}
+
+.timeline-day {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.timeline-activities {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.activity-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.activity-icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+}
+
+.activity-text {
+    flex: 1;
+    font-size: 14px;
+}
+
+.activity-duration {
+    background: #e2e8f0;
+    color: #64748b;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.tips-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.tip-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border-radius: 8px;
+    border-left: 4px solid #f59e0b;
+}
+
+.roadmap-content {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .roadmap-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .roadmap-week-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
+.activity-link:hover {
+    color: #007bff !important;
+}
+
+.activity-link:hover .activity-desc {
+    text-decoration: underline;
+}
+
+.topic-card {
+    background-color: #f8f9fa;
+    border-left: 4px solid #007bff;
+    transition: all 0.3s ease;
+}
+
+.topic-card:hover {
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.topic-title {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.resource-link {
+    color: #6c757d;
+    transition: color 0.3s ease;
+}
+
+.resource-link:hover {
+    color: #007bff !important;
+}
+
+.resource-item {
+    padding: 0.25rem 0;
+}
+
+.resource-item:hover {
+    background-color: #e9ecef;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    margin: 0 -0.5rem;
+}
+
+/* Roadmap specific styles */
+.roadmap-topic-card {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.roadmap-topic-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    border-color: #007bff;
+}
+
+.topic-header {
+    color: #495057;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.topic-resources {
+    margin-bottom: 0.75rem;
+}
+
+.roadmap-topic-card .resource-item {
+    background-color: white;
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid #007bff;
+    transition: all 0.3s ease;
+}
+
+.roadmap-topic-card .resource-item:hover {
+    background-color: #f8f9fa;
+    border-left-color: #0056b3;
+    transform: translateX(5px);
+}
+
+.roadmap-topic-card .resource-link {
+    color: #495057;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.roadmap-topic-card .resource-link:hover {
+    color: #007bff;
+}
+
+.topic-test {
+    text-align: center;
+    padding-top: 0.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Roadmap view improvements */
+#roadmap-view {
+    display: none;
+}
+
+#roadmap-view.active {
+    display: block;
+}
+
+.roadmap-week-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.roadmap-week-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    border-color: #007bff;
+}
+
+.roadmap-week-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid #e9ecef;
+}
+
+.roadmap-week-title {
+    color: #495057;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.roadmap-week-stats {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.roadmap-content {
+    padding: 1rem 0;
+}
+
+.topic-tags {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.topic-tag {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,123,255,0.3);
+}
+
+/* Activity checkbox styles */
+.activity-checkbox {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.activity-checkbox:hover {
+    transform: scale(1.1);
+}
+
+.activity-checkbox i {
+    font-size: 1.2rem;
+    transition: all 0.3s ease;
+}
+
+.activity-checkbox:hover i {
+    transform: scale(1.1);
+}
+
+/* Toast notification styles */
+.toast-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateX(100%);
+    transition: all 0.3s ease;
+    border-left: 4px solid #28a745;
+    max-width: 300px;
+}
+
+.toast-notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.toast-notification.toast-error {
+    border-left-color: #dc3545;
+}
+
+.toast-notification i {
+    margin-right: 0.5rem;
+}
+
+/* Progress tracking styles */
+.activity-item.completed {
+    opacity: 0.7;
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    padding: 0.5rem;
+}
+
+.activity-item.completed .activity-desc {
+    text-decoration: line-through;
+    color: #6c757d;
+}
+
+/* Mermaid diagram styles */
+.roadmap-container {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+#roadmap-diagram {
+    width: 100%;
+    height: auto;
+    min-height: 400px;
+}
+
+.mermaid {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Responsive diagram */
+@media (max-width: 768px) {
+    .roadmap-container {
+        padding: 1rem;
+    }
+    
+    #roadmap-diagram {
+        min-height: 300px;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+// Initialize Mermaid
+mermaid.initialize({
+    startOnLoad: true,
+    theme: 'default',
+    themeVariables: {
+        primaryColor: '#6366f1',
+        primaryTextColor: '#ffffff',
+        primaryBorderColor: '#4f46e5',
+        lineColor: '#6366f1',
+        secondaryColor: '#10b981',
+        tertiaryColor: '#f8fafc'
+    },
+    flowchart: {
+        useMaxWidth: true,
+        htmlLabels: true
+    }
+});
+
+// Toggle between list and roadmap views
+function toggleView(view) {
+    const listView = document.getElementById('list-view');
+    const roadmapView = document.getElementById('roadmap-view');
+    const listBtn = document.querySelector('button[onclick="toggleView(\'list\')"]');
+    const roadmapBtn = document.querySelector('button[onclick="toggleView(\'roadmap\')"]');
+    
+    if (view === 'list') {
+        listView.style.display = 'block';
+        roadmapView.style.display = 'none';
+        listBtn.classList.add('btn-primary');
+        listBtn.classList.remove('btn-outline-primary');
+        roadmapBtn.classList.add('btn-outline-primary');
+        roadmapBtn.classList.remove('btn-primary');
+    } else {
+        listView.style.display = 'none';
+        roadmapView.style.display = 'block';
+        roadmapBtn.classList.add('btn-primary');
+        roadmapBtn.classList.remove('btn-outline-primary');
+        listBtn.classList.add('btn-outline-primary');
+        listBtn.classList.remove('btn-primary');
+        
+        // Add smooth transition effect
+        roadmapView.classList.add('active');
+        
+        // Re-render Mermaid diagram when switching to roadmap view
+        setTimeout(() => {
+            const diagramElement = document.getElementById('roadmap-diagram');
+            if (diagramElement) {
+                // Clear existing diagram
+                diagramElement.innerHTML = diagramElement.innerHTML;
+                // Re-initialize Mermaid
+                mermaid.init(undefined, diagramElement);
+            }
+        }, 200);
+        
+        // Add animation to roadmap cards
+        const roadmapCards = document.querySelectorAll('.roadmap-week-card');
+        roadmapCards.forEach((card, index) => {
+            setTimeout(() => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100);
+            }, index * 100);
+        });
+    }
+}
+
+// Initialize with roadmap view
+document.addEventListener('DOMContentLoaded', function() {
+    toggleView('roadmap');
+});
+
+// Toggle activity completion
+function toggleActivity(button) {
+    const courseId = button.dataset.courseId;
+    const weekNumber = button.dataset.weekNumber;
+    const activityId = button.dataset.activityId;
+    
+    // Show loading state
+    const icon = button.querySelector('i');
+    icon.className = 'fas fa-spinner fa-spin text-primary';
+    
+    // Send AJAX request
+    fetch('/mark-activity-complete', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            course_id: courseId,
+            week_number: weekNumber,
+            activity_id: activityId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update icon based on completion status
+            if (data.completed) {
+                icon.className = 'fas fa-check-circle text-success';
+                // Add completion animation
+                button.style.transform = 'scale(1.2)';
+                setTimeout(() => {
+                    button.style.transform = 'scale(1)';
+                }, 200);
+            } else {
+                icon.className = 'far fa-circle text-muted';
+            }
+            
+            // Show success message
+            showToast(data.message, 'success');
+            
+            // Update progress bar if exists
+            updateProgressBar();
+        } else {
+            // Show error message
+            showToast(data.message, 'error');
+            // Revert icon
+            icon.className = 'far fa-circle text-muted';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Bir hata oluştu!', 'error');
+        // Revert icon
+        icon.className = 'far fa-circle text-muted';
+    });
+}
+
+// Show toast notification
+function showToast(message, type) {
+    // Create toast element
+    const toast = document.createElement('div');
+    toast.className = `toast-notification toast-${type}`;
+    toast.innerHTML = `
+        <i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>
+        ${message}
+    `;
+    
+    // Add to page
+    document.body.appendChild(toast);
+    
+    // Show toast
+    setTimeout(() => {
+        toast.classList.add('show');
+    }, 100);
+    
+    // Remove toast after 3 seconds
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 300);
+    }, 3000);
+}
+
+// Update progress bar
+function updateProgressBar() {
+    const totalActivities = document.querySelectorAll('.activity-checkbox').length;
+    const completedActivities = document.querySelectorAll('.activity-checkbox .fa-check-circle').length;
+    const progressPercentage = totalActivities > 0 ? (completedActivities / totalActivities) * 100 : 0;
+    
+    // Update progress bar if exists
+    const progressBar = document.querySelector('.progress-bar');
+    if (progressBar) {
+        progressBar.style.width = progressPercentage + '%';
+        progressBar.setAttribute('aria-valuenow', progressPercentage);
+    }
+}
+</script>
+{% endblock %}
